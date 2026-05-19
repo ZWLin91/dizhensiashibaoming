@@ -1,0 +1,16 @@
+{
+  "name": "event-registration",
+  "version": "2.0.0",
+  "description": "一次性链接赛事报名系统（云端版）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "express": "^4.18.2",
+    "sql.js": "^1.14.1",
+    "uuid": "^9.0.0"
+  }
+}
