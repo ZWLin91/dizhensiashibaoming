@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛事报名 - 管理后台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+  }
+  /* 顶部导航 */
+  .navbar {
+    background: linear-gradient(135deg, #1a56db, #1e40af);
+    color: #fff;
+    padding: 0 28px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .navbar h1 { font-size: 17px; font-weight: 600; flex: 1; }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    height: 100%;
+  }
+  .nav-tab {
+    padding: 0 16px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .nav-tab:hover { color: #fff; }
+  .nav-tab.active {
+    color: #fff;
+    border-bottom-color: #60a5fa;
+    font-weight: 500;
+  }
+
+  /* 主内容 */
+  .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* 统计卡片 */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .stat-card .num {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 4px;
+  }
+  .stat-card .label { font-size: 12px; color: #6b7280; }
+  .stat-card.green .num { color: #16a34a; }
+  .stat-card.orange .num { color: #d97706; }
+  .stat-card.red .num { color: #dc2626; }
+
+  /* 卡片区块 */
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  /* 表单 */
+  .form-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: #6b7280; }
+  .field input {
+    padding: 8px 12px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    width: 140px;
+  }
+  .field input:focus { border-color: #1a56db; }
+  .btn {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.88; }
+  .btn-primary { background: #1a56db; color: #fff; }
+  .btn-success { background: #16a34a; color: #fff; }
+  .btn-danger { background: #dc2626; color: #fff; }
+  .btn-outline {
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    color: #374151;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* 提示 */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .alert.info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .alert.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+  /* 表格 */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th, td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  tr:hover td { background: #f9fafb; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tag-used { background: #f0fdf4; color: #15803d; }
+  .tag-unused { background: #eff6ff; color: #1d4ed8; }
+  .tag-blue { background: #dbeafe; color: #1d4ed8; }
+  .tag-orange { background: #fef3c7; color: #b45309; }
+  .action-btn {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid;
+    background: none;
+  }
+  .action-btn.del { color: #dc2626; border-color: #fca5a5; }
+  .action-btn.del:hover { background: #fef2f2; }
+
+  /* 链接区 */
+  .link-list {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #f9fafb;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 12px;
+    font-family: monospace;
+    color: #374151;
+    word-break: break-all;
+    line-height: 1.8;
+    margin-top: 12px;
+  }
+
+  /* 分页 */
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: center;
+  }
+  .pagination button {
+    padding: 5px 12px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pagination span { font-size: 12px; color: #6b7280; }
+
+  /* 加载 */
+  .loading { text-align: center; padding: 40px; color: #9ca3af; font-size: 13px; }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-tabs { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="navbar">
+  <h1>报名管理后台</h1>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="home">数据总览</div>
+    <div class="nav-tab" data-tab="tokens">链接管理</div>
+    <div class="nav-tab" data-tab="registrations">报名数据</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ===== 首页 ===== -->
+  <div id="tab-home">
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="num" id="stat-total">-</div>
+        <div class="label">生成链接总数</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="num" id="stat-unused">-</div>
+        <div class="label">未使用</div>
+      </div>
+      <div class="stat-card green">
+        <div class="num" id="stat-used">-</div>
+        <div class="label">已使用</div>
+      </div>
+      <div class="stat-card red">
+        <div class="num" id="stat-reg">-</div>
+        <div class="label">实际报名人数</div>
+      </div>
+    </div>
+
+    <!-- 生成链接 -->
+    <div class="card">
+      <div class="card-title">生成报名链接</div>
+      <div class="form-row">
+        <div class="field">
+          <label>生成数量</label>
+          <input type="number" id="genCount" value="500" min="1" max="10000">
+        </div>
+        <button class="btn btn-primary" id="btnGenerate">生成链接</button>
+        <button class="btn btn-success" id="btnExportLinks">导出所有链接</button>
+        <button class="btn btn-outline" id="btnExportCsv">导出报名数据</button>
+        <button class="btn btn-danger" id="btnCleanUsed">清理已用链接</button>
+        <button class="btn btn-danger" id="btnClearAll" style="background:#991b1b">清空全部链接</button>
+      </div>
+      <div class="alert info" id="genAlert"></div>
+      <div class="link-list" id="linkPreview" style="display:none"></div>
+    </div>
+
+    <!-- 报名数据预览 -->
+    <div class="card">
+      <div class="card-title">最新报名（最近10条）</div>
+      <div class="table-wrap">
+        <table id="recentTable">
+          <thead>
+            <tr>
+              <th>序号</th><th>活动类型</th><th>姓名</th><th>手机号</th><th>地址</th><th>报名时间</th>
+            </tr>
+          </thead>
+          <tbody id="recentBody"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 链接管理 ===== -->
+  <div id="tab-tokens" style="display:none">
+    <div class="card">
+      <div class="card-title">所有链接（分页显示）</div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <button class="btn btn-outline" id="filterAll">全部</button>
+        <button class="btn btn-outline" id="filterUnused">只看未使用</button>
+        <button class="btn btn-outline" id="filterUsed">只看已使用</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Token</th><th>状态</th><th>创建时间</th><th>使用时间</th><th>操作</th></tr>
+          </thead>
+          <tbody id="tokensBody"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="tokensPager"></div>
+    </div>
+  </div>
+
+  <!-- ===== 报名数据 ===== -->
+  <div id="tab-registrations" style="display:none">
+    <div class="card">
+      <div class="card-title">全部报名数据</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>序号</th><th>活动类型</th><th>姓名</th><th>性别</th><th>手机号</th>
+              <th>紧急联络人</th><th>地址</th><th>服装尺寸</th><th>报名时间</th>
+            </tr>
+          </thead>
+          <tbody id="regsBody"><tr><td colspan="9" class="loading">加载中...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="regsPager"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+let currentTab = 'home';
+let tokenFilter = 'all';
+let tokenPage = 1;
+let regPage = 1;
+const PAGE_SIZE = 20;
+
+function eventName(type) {
+  return type === 'blue_fire' ? '蓝焰青春挑战赛' : type === 'family_guardian' ? '平安小卫士亲子赛' : type;
+}
+function eventTagClass(type) {
+  return type === 'blue_fire' ? 'tag-blue' : 'tag-orange';
+}
+
+// ============ 加载统计 ============
+async function loadStats() {
+  const r = await fetch(API + '/api/stats');
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('stat-total').textContent = d.total;
+    document.getElementById('stat-unused').textContent = d.unused;
+    document.getElementById('stat-used').textContent = d.used;
+    document.getElementById('stat-reg').textContent = d.registrations;
+  }
+}
+
+// ============ 生成链接 ============
+document.getElementById('btnGenerate').addEventListener('click', async () => {
+  const btn = document.getElementById('btnGenerate');
+  const alert = document.getElementById('genAlert');
+  const count = parseInt(document.getElementById('genCount').value) || 500;
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  alert.style.display = 'none';
+
+  try {
+    const r = await fetch(API + '/api/generate-tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count })
+    });
+    const d = await r.json();
+
+    if (d.success) {
+      alert.className = 'alert success';
+      alert.textContent = `成功生成 ${d.count} 个链接！`;
+      alert.style.display = 'block';
+
+      const preview = document.getElementById('linkPreview');
+      const links = d.tokens.slice(0, 20).map(t => `${d.baseUrl}/register?token=${t}`).join('\n');
+      preview.innerHTML = `（共 ${d.count} 个，仅显示前20个）\n${links}`;
+      preview.style.display = 'block';
+
+      loadStats();
+    } else {
+      alert.className = 'alert error';
+      alert.textContent = d.msg || '生成失败';
+      alert.style.display = 'block';
+    }
+  } catch (e) {
+    alert.className = 'alert error';
+    alert.textContent = '网络错误';
+    alert.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = '生成链接';
+});
+
+// 导出链接
+document.getElementById('btnExportLinks').addEventListener('click', () => {
+  window.location.href = API + '/api/export-links';
+});
+
+// 导出 CSV
+document.getElementById('btnExportCsv').addEventListener('click', () => {
+  window.location.href = API + '/api/export-csv';
+});
+
+// 清理已用链接
+document.getElementById('btnCleanUsed').addEventListener('click', async () => {
+  if (!confirm('确定删除所有已使用的链接？报名数据会保留。')) return;
+  await fetch(API + '/api/tokens-clean', { method: 'DELETE' });
+  loadStats();
+  if (currentTab === 'tokens') loadTokens();
+  if (currentTab === 'registrations') loadRegistrations();
+});
+
+// 清空全部链接
+document.getElementById('btnClearAll').addEventListener('click', async () => {
+  if (!confirm('警告：这将删除所有链接和报名数据，且不可恢复！\n\n确定要清空全部吗？')) return;
+  const r = await fetch(API + '/api/tokens-clear-all', { method: 'DELETE' });
+  const d = await r.json();
+  alert(d.msg || '已清空');
+  loadStats();
+  loadRecent();
+  if (currentTab === 'tokens') loadTokens();
+  if (currentTab === 'registrations') loadRegistrations();
+});
+
+// ============ 加载最新报名 ============
+async function loadRecent() {
+  const r = await fetch(API + '/api/registrations');
+  const d = await r.json();
+  const tbody = document.getElementById('recentBody');
+
+  if (!d.data || d.data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:30px">暂无报名数据</td></tr>';
+    return;
+  }
+
+  const rows = d.data.slice(0, 10);
+  tbody.innerHTML = rows.map(r => {
+    const p = r.participants || [];
+    return `<tr>
+      <td>${r.id}</td>
+      <td><span class="tag ${eventTagClass(r.event_type)}">${eventName(r.event_type)}</span></td>
+      <td>${esc(p.map(x => x.name || '').filter(Boolean).join('; '))}</td>
+      <td>${esc(r.phone)}</td>
+      <td>${esc(r.address)}</td>
+      <td>${esc(r.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ 加载链接列表 ============
+async function loadTokens() {
+  const r = await fetch(API + `/api/tokens?status=${tokenFilter}`);
+  const d = await r.json();
+  const tbody = document.getElementById('tokensBody');
+
+  if (!d.data || d.data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:30px">暂无数据</td></tr>';
+    document.getElementById('tokensPager').innerHTML = '';
+    return;
+  }
+
+  const total = d.data.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const page = Math.min(tokenPage, totalPages);
+  const start = (page - 1) * PAGE_SIZE;
+  const rows = d.data.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.id}</td>
+      <td style="font-family:monospace;font-size:12px">${esc(r.token)}</td>
+      <td>
+        <span class="tag ${r.used ? 'tag-used' : 'tag-unused'}">${r.used ? '已使用' : '未使用'}</span>
+      </td>
+      <td>${esc(r.created_at)}</td>
+      <td>${esc(r.used_at || '-')}</td>
+      <td>
+        <button class="action-btn del" onclick="deleteToken('${r.token}')">删除</button>
+      </td>
+    </tr>
+  `).join('');
+
+  renderPager('tokensPager', page, totalPages, (p) => { tokenPage = p; loadTokens(); });
+}
+
+// ============ 加载报名数据 ============
+async function loadRegistrations() {
+  const r = await fetch(API + '/api/registrations');
+  const d = await r.json();
+  const tbody = document.getElementById('regsBody');
+
+  if (!d.data || d.data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:30px">暂无报名数据</td></tr>';
+    document.getElementById('regsPager').innerHTML = '';
+    return;
+  }
+
+  const total = d.data.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const page = Math.min(regPage, totalPages);
+  const start = (page - 1) * PAGE_SIZE;
+  const rows = d.data.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = rows.map(r => {
+    const p = r.participants || [];
+    return `<tr>
+      <td>${r.id}</td>
+      <td><span class="tag ${eventTagClass(r.event_type)}">${eventName(r.event_type)}</span></td>
+      <td>${esc(p.map(x => x.name || '').filter(Boolean).join('; '))}</td>
+      <td>${esc(p.map(x => x.gender || '').filter(Boolean).join('; '))}</td>
+      <td>${esc(r.phone)}</td>
+      <td>${esc(r.emergency_name)} / ${esc(r.emergency_phone)}</td>
+      <td>${esc(r.address)}</td>
+      <td>${esc(p.map(x => x.clothing_size || '').filter(Boolean).join('; '))}</td>
+      <td>${esc(r.created_at)}</td>
+    </tr>`;
+  }).join('');
+
+  renderPager('regsPager', page, totalPages, (p) => { regPage = p; loadRegistrations(); });
+}
+
+// ============ 删除单个 token ============
+async function deleteToken(token) {
+  if (!confirm('确定删除此链接？')) return;
+  await fetch(API + `/api/tokens/${token}`, { method: 'DELETE' });
+  loadStats();
+  loadTokens();
+}
+
+// ============ 分页组件 ============
+function renderPager(id, current, total, onChange) {
+  const el = document.getElementById(id);
+  if (total <= 1) { el.innerHTML = ''; return; }
+  let html = `
+    <button ${current <= 1 ? 'disabled' : ''} onclick="window.__p(${current - 1})">上一页</button>
+    <span>第 ${current} / ${total} 页（共 ${total} 页）</span>
+    <button ${current >= total ? 'disabled' : ''} onclick="window.__p(${current + 1})">下一页</button>
+  `;
+  el.innerHTML = html;
+  window.__p = onChange;
+}
+
+// ============ Tab 切换 ============
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    const tabId = tab.dataset.tab;
+    currentTab = tabId;
+    document.getElementById('tab-home').style.display = tabId === 'home' ? '' : 'none';
+    document.getElementById('tab-tokens').style.display = tabId === 'tokens' ? '' : 'none';
+    document.getElementById('tab-registrations').style.display = tabId === 'registrations' ? '' : 'none';
+
+    if (tabId === 'home') { loadStats(); loadRecent(); }
+    if (tabId === 'tokens') { tokenPage = 1; loadTokens(); }
+    if (tabId === 'registrations') { regPage = 1; loadRegistrations(); }
+  });
+});
+
+// 链接过滤器
+['filterAll', 'filterUnused', 'filterUsed'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () => {
+    tokenFilter = id === 'filterAll' ? 'all' : id === 'filterUnused' ? 'unused' : 'used';
+    tokenPage = 1;
+    loadTokens();
+  });
+});
+
+// ============ 工具 ============
+function esc(str) {
+  return String(str || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ============ 初始化 ============
+loadStats();
+loadRecent();
+</script>
+</body>
+</html>
