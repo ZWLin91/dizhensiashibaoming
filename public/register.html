@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛事报名</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 560px;
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a56db, #1e40af);
+    color: #fff;
+    padding: 28px 32px;
+    text-align: center;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .header p { font-size: 13px; opacity: 0.85; }
+  .body { padding: 32px; }
+
+  /* 按钮选择区 */
+  .choice-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .choice-btn {
+    width: 100%;
+    padding: 24px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .choice-btn:hover {
+    border-color: #1a56db;
+    background: #f0f7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,86,219,0.12);
+  }
+  .choice-btn .icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .choice-btn.blue .icon { background: #dbeafe; color: #1d4ed8; }
+  .choice-btn.orange .icon { background: #fef3c7; color: #b45309; }
+  .choice-btn .info h3 { font-size: 17px; font-weight: 600; color: #1f2937; margin-bottom: 3px; }
+  .choice-btn .info p { font-size: 12px; color: #6b7280; }
+
+  /* 表单区 */
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+  .form-group label .req { color: #ef4444; margin-right: 2px; }
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: #1a56db;
+  }
+  .form-group .hint {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+
+  /* 亲子赛多人输入 */
+  .participant-block {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid #e5e7eb;
+  }
+  .participant-block h4 {
+    font-size: 13px;
+    color: #4b5563;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .participant-block .row {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .participant-block .row.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1a56db, #1e40af);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .submit-btn:hover { opacity: 0.92; }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .back-btn {
+    background: none; border: 1.5px solid #d1d5db;
+    color: #4b5563; padding: 10px 20px;
+    border-radius: 8px; font-size: 13px;
+    cursor: pointer; margin-bottom: 18px;
+  }
+  .back-btn:hover { background: #f3f4f6; }
+
+  .msg {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    display: none;
+  }
+  .msg.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .msg.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .msg.warn { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+
+  .footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 11px;
+    color: #9ca3af;
+    border-top: 1px solid #f3f4f6;
+  }
+  .loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  .divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 20px 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>赛事报名</h1>
+    <p>请选择您要报名的赛事</p>
+  </div>
+  <div class="body" id="body">
+    <div class="msg" id="msg"></div>
+
+    <!-- 加载验证 -->
+    <div class="loading-state" id="loadingState">正在验证报名链接...</div>
+
+    <!-- 步骤1：选择赛事 -->
+    <div class="choice-grid" id="stepChoice" style="display:none">
+      <button class="choice-btn blue" onclick="chooseEvent('blue_fire')">
+        <div class="icon">&#x1F525;</div>
+        <div class="info">
+          <h3>蓝焰青春挑战赛</h3>
+          <p>个人挑战赛 · 填写个人报名信息</p>
+        </div>
+      </button>
+      <button class="choice-btn orange" onclick="chooseEvent('family_guardian')">
+        <div class="icon">&#x1F46A;</div>
+        <div class="info">
+          <h3>平安小卫士亲子赛</h3>
+          <p>亲子赛 · 最多可填写4人信息</p>
+        </div>
+      </button>
+    </div>
+
+    <!-- 步骤2：蓝焰青春报名表单 -->
+    <div id="formBlue" style="display:none">
+      <button class="back-btn" onclick="backToChoice()">&larr; 返回选择</button>
+      <h3 style="margin-bottom:18px;font-size:16px;color:#1f2937">蓝焰青春挑战赛 - 报名表</h3>
+      <form id="blueForm">
+        <div class="form-group">
+          <label><span class="req">*</span> 姓名</label>
+          <input type="text" name="name" placeholder="请输入真实姓名" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 性别</label>
+          <select name="gender" required>
+            <option value="">请选择</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 出生年月</label>
+          <input type="month" name="birth" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 国籍</label>
+          <input type="text" name="nationality" placeholder="如：中国" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 身份证号</label>
+          <input type="text" name="id_card" placeholder="请输入身份证号" maxlength="18" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 本人手机号</label>
+          <input type="tel" name="phone" placeholder="请输入手机号码" maxlength="11" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 紧急联络人姓名</label>
+          <input type="text" name="emergency_name" placeholder="请输入紧急联络人姓名" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 紧急联络人手机号</label>
+          <input type="tel" name="emergency_phone" placeholder="请输入紧急联络人手机号" maxlength="11" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 服装尺寸</label>
+          <select name="clothing_size" required>
+            <option value="">请选择</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="2XL">2XL</option>
+            <option value="3XL">3XL</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 地址</label>
+          <input type="text" name="address" placeholder="请输入详细地址" required>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBlue">提交报名</button>
+      </form>
+    </div>
+
+    <!-- 步骤2：平安小卫士亲子赛报名表单 -->
+    <div id="formFamily" style="display:none">
+      <button class="back-btn" onclick="backToChoice()">&larr; 返回选择</button>
+      <h3 style="margin-bottom:18px;font-size:16px;color:#1f2937">平安小卫士亲子赛 - 报名表</h3>
+      <form id="familyForm">
+        <!-- 参与者1 -->
+        <div class="participant-block">
+          <h4>参与者 1</h4>
+          <div class="row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>姓名</label>
+              <input type="text" name="p1_name" placeholder="姓名">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>性别</label>
+              <select name="p1_gender">
+                <option value="">-</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>出生年月</label>
+              <input type="month" name="p1_birth">
+            </div>
+          </div>
+          <div class="row three">
+            <div class="form-group" style="margin-bottom:0">
+              <label>身份证号</label>
+              <input type="text" name="p1_id_card" placeholder="身份证号" maxlength="18">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>服装尺寸</label>
+              <select name="p1_clothing_size">
+                <option value="">-</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="2XL">2XL</option>
+                <option value="3XL">3XL</option>
+              </select>
+            </div>
+            <div></div>
+          </div>
+        </div>
+        <!-- 参与者2 -->
+        <div class="participant-block">
+          <h4>参与者 2</h4>
+          <div class="row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>姓名</label>
+              <input type="text" name="p2_name" placeholder="姓名">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>性别</label>
+              <select name="p2_gender">
+                <option value="">-</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>出生年月</label>
+              <input type="month" name="p2_birth">
+            </div>
+          </div>
+          <div class="row three">
+            <div class="form-group" style="margin-bottom:0">
+              <label>身份证号</label>
+              <input type="text" name="p2_id_card" placeholder="身份证号" maxlength="18">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>服装尺寸</label>
+              <select name="p2_clothing_size">
+                <option value="">-</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="2XL">2XL</option>
+                <option value="3XL">3XL</option>
+              </select>
+            </div>
+            <div></div>
+          </div>
+        </div>
+        <!-- 参与者3 -->
+        <div class="participant-block">
+          <h4>参与者 3</h4>
+          <div class="row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>姓名</label>
+              <input type="text" name="p3_name" placeholder="姓名">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>性别</label>
+              <select name="p3_gender">
+                <option value="">-</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>出生年月</label>
+              <input type="month" name="p3_birth">
+            </div>
+          </div>
+          <div class="row three">
+            <div class="form-group" style="margin-bottom:0">
+              <label>身份证号</label>
+              <input type="text" name="p3_id_card" placeholder="身份证号" maxlength="18">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>服装尺寸</label>
+              <select name="p3_clothing_size">
+                <option value="">-</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="2XL">2XL</option>
+                <option value="3XL">3XL</option>
+              </select>
+            </div>
+            <div></div>
+          </div>
+        </div>
+        <!-- 参与者4 -->
+        <div class="participant-block">
+          <h4>参与者 4</h4>
+          <div class="row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>姓名</label>
+              <input type="text" name="p4_name" placeholder="姓名">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>性别</label>
+              <select name="p4_gender">
+                <option value="">-</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>出生年月</label>
+              <input type="month" name="p4_birth">
+            </div>
+          </div>
+          <div class="row three">
+            <div class="form-group" style="margin-bottom:0">
+              <label>身份证号</label>
+              <input type="text" name="p4_id_card" placeholder="身份证号" maxlength="18">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>服装尺寸</label>
+              <select name="p4_clothing_size">
+                <option value="">-</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="2XL">2XL</option>
+                <option value="3XL">3XL</option>
+              </select>
+            </div>
+            <div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-group">
+          <label><span class="req">*</span> 国籍</label>
+          <input type="text" name="nationality" placeholder="如：中国" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 本人手机号</label>
+          <input type="tel" name="phone" placeholder="请输入手机号码" maxlength="11" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 紧急联络人姓名</label>
+          <input type="text" name="emergency_name" placeholder="请输入紧急联络人姓名" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 紧急联络人手机号</label>
+          <input type="tel" name="emergency_phone" placeholder="请输入紧急联络人手机号" maxlength="11" required>
+        </div>
+        <div class="form-group">
+          <label><span class="req">*</span> 地址</label>
+          <input type="text" name="address" placeholder="请输入详细地址" required>
+        </div>
+        <button type="submit" class="submit-btn" id="submitFamily">提交报名</button>
+      </form>
+    </div>
+  </div>
+  <div class="footer">提交后链接自动失效，请仔细核对信息</div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const msgEl = document.getElementById('msg');
+  const loadingEl = document.getElementById('loadingState');
+  const stepChoice = document.getElementById('stepChoice');
+  const formBlue = document.getElementById('formBlue');
+  const formFamily = document.getElementById('formFamily');
+
+  let validToken = false;
+
+  function showMsg(type, text) {
+    msgEl.className = 'msg ' + type;
+    msgEl.textContent = text;
+    msgEl.style.display = 'block';
+    loadingEl.style.display = 'none';
+  }
+
+  function hideAll() {
+    stepChoice.style.display = 'none';
+    formBlue.style.display = 'none';
+    formFamily.style.display = 'none';
+  }
+
+  // 验证 token
+  if (!token) {
+    showMsg('error', '缺少报名链接参数，请联系管理员获取正确的链接。');
+  } else {
+    fetch('/api/validate-token?token=' + encodeURIComponent(token))
+      .then(r => r.json())
+      .then(result => {
+        loadingEl.style.display = 'none';
+        if (result.valid) {
+          validToken = true;
+          stepChoice.style.display = 'flex';
+        } else {
+          if (result.reason === 'used') {
+            showMsg('warn', '此报名链接已被使用过，每个链接只能报名一次。如需修改请联系管理员。');
+          } else {
+            showMsg('error', '此报名链接无效或已被删除，请联系管理员获取正确的链接。');
+          }
+        }
+      })
+      .catch(() => {
+        showMsg('error', '网络错误，请检查网络后刷新页面重试。');
+      });
+  }
+
+  function chooseEvent(type) {
+    if (!validToken) return;
+    hideAll();
+    if (type === 'blue_fire') {
+      formBlue.style.display = 'block';
+    } else {
+      formFamily.style.display = 'block';
+    }
+  }
+
+  function backToChoice() {
+    hideAll();
+    stepChoice.style.display = 'flex';
+    msgEl.style.display = 'none';
+  }
+
+  // 蓝焰青春提交
+  document.getElementById('blueForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBlue');
+    const fd = new FormData(e.target);
+
+    const participants = [{
+      name: fd.get('name'),
+      gender: fd.get('gender'),
+      birth: fd.get('birth'),
+      id_card: fd.get('id_card'),
+      clothing_size: fd.get('clothing_size')
+    }];
+
+    const data = {
+      token: token,
+      event_type: 'blue_fire',
+      phone: fd.get('phone'),
+      emergency_name: fd.get('emergency_name'),
+      emergency_phone: fd.get('emergency_phone'),
+      nationality: fd.get('nationality'),
+      address: fd.get('address'),
+      participants: participants
+    };
+
+    btn.disabled = true;
+    btn.textContent = '提交中...';
+    msgEl.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.success) {
+        showMsg('success', '报名成功！感谢您的参与。');
+        e.target.style.display = 'none';
+        const backBtn = e.target.closest('div').querySelector('.back-btn');
+        if (backBtn) backBtn.style.display = 'none';
+        document.querySelector('.header h1').textContent = '报名已完成';
+        document.querySelector('.header p').textContent = '祝您取得好成绩！';
+      } else {
+        showMsg('error', result.msg || '提交失败，请重试。');
+        btn.disabled = false;
+        btn.textContent = '提交报名';
+      }
+    } catch (err) {
+      showMsg('error', '网络错误，请检查网络后重试。');
+      btn.disabled = false;
+      btn.textContent = '提交报名';
+    }
+  });
+
+  // 平安小卫士提交
+  document.getElementById('familyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitFamily');
+    const fd = new FormData(e.target);
+
+    // 收集参与者
+    const participants = [];
+    for (let i = 1; i <= 4; i++) {
+      const name = fd.get('p' + i + '_name');
+      if (name && name.trim()) {
+        const gender = fd.get('p' + i + '_gender');
+        const birth = fd.get('p' + i + '_birth');
+        const id_card = fd.get('p' + i + '_id_card');
+        const clothing_size = fd.get('p' + i + '_clothing_size');
+        if (!clothing_size) {
+          showMsg('error', '参与者 ' + i + ' 已填写姓名，必须同时填写服装尺寸');
+          return;
+        }
+        participants.push({ name: name.trim(), gender, birth, id_card, clothing_size });
+      }
+    }
+
+    // 至少填写一人
+    if (participants.length === 0) {
+      showMsg('error', '请至少填写一名参与者的姓名');
+      return;
+    }
+
+    const data = {
+      token: token,
+      event_type: 'family_guardian',
+      phone: fd.get('phone'),
+      emergency_name: fd.get('emergency_name'),
+      emergency_phone: fd.get('emergency_phone'),
+      nationality: fd.get('nationality'),
+      address: fd.get('address'),
+      participants: participants
+    };
+
+    btn.disabled = true;
+    btn.textContent = '提交中...';
+    msgEl.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (result.success) {
+        showMsg('success', '报名成功！感谢您的参与。');
+        e.target.style.display = 'none';
+        const backBtn = e.target.closest('div').querySelector('.back-btn');
+        if (backBtn) backBtn.style.display = 'none';
+        document.querySelector('.header h1').textContent = '报名已完成';
+        document.querySelector('.header p').textContent = '祝您取得好成绩！';
+      } else {
+        showMsg('error', result.msg || '提交失败，请重试。');
+        btn.disabled = false;
+        btn.textContent = '提交报名';
+      }
+    } catch (err) {
+      showMsg('error', '网络错误，请检查网络后重试。');
+      btn.disabled = false;
+      btn.textContent = '提交报名';
+    }
+  });
+</script>
+</body>
+</html>
